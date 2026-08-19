@@ -54,43 +54,63 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Tenta buscar da API RapidAPI
+    // Tenta buscar da API RapidAPI. A chave nunca deve ficar no código-fonte.
     const apiUrl = "https://whatsapp-profile-data1.p.rapidapi.com/WhatsappProfilePhotoWithToken"
+    const rapidApiKey = process.env.RAPIDAPI_KEY || process.env.X_RAPIDAPI_KEY
+
+    if (!rapidApiKey) {
+      console.error("[v0] RAPIDAPI_KEY is not configured")
+      return NextResponse.json(
+        { success: false, result: null, error: "WhatsApp API is not configured" },
+        { status: 503, headers: { "Access-Control-Allow-Origin": "*" } },
+      )
+    }
 
     let photoUrl: string | null = null
 
-    // Uma única tentativa com timeout curto evita espera longa e resultados falsos.
+    // Uma única tentativa com timeout evita espera longa e resultados falsos.
     try {
       const response = await fetch(apiUrl, {
         signal: AbortSignal.timeout(10000),
         method: "POST",
         headers: {
-          "x-rapidapi-key": "42865ce77amsh6b3ec8ac168e4c3p1ae1b6jsndc1ea20ce2d0",
+          "x-rapidapi-key": rapidApiKey,
           "x-rapidapi-host": "whatsapp-profile-data1.p.rapidapi.com",
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ phone_number: fullPhone }),
+        cache: "no-store",
       })
 
-      console.log("[v0] API Response status:", response.status)
-      if (response.ok) {
-        const responseText = await response.text()
-        const jsonResponse = JSON.parse(responseText)
-        photoUrl =
-          jsonResponse.url ||
-          jsonResponse.urlImage ||
-          jsonResponse.profile_pic ||
-          jsonResponse.profilePic ||
-          jsonResponse.picture ||
-          jsonResponse.photo ||
-          (typeof jsonResponse.result === "string" ? jsonResponse.result : null)
+      const responseText = await response.text()
+      console.log("[v0] RapidAPI response status:", response.status)
+
+      if (!response.ok) {
+        console.error("[v0] RapidAPI rejected request:", response.status, responseText.slice(0, 300))
+      } else {
+        try {
+          const jsonResponse = JSON.parse(responseText)
+          const candidate =
+            jsonResponse.url ||
+            jsonResponse.urlImage ||
+            jsonResponse.pictureUrl ||
+            jsonResponse.profile_pic ||
+            jsonResponse.profilePic ||
+            jsonResponse.picture ||
+            jsonResponse.photo ||
+            (typeof jsonResponse.result === "string" ? jsonResponse.result : null)
+          photoUrl = typeof candidate === "string" ? candidate.trim() : null
+        } catch {
+          console.error("[v0] RapidAPI returned invalid JSON:", responseText.slice(0, 300))
+        }
       }
     } catch (fetchError) {
-      console.error("[v0] Fetch error:", fetchError)
+      console.error("[v0] RapidAPI fetch error:", fetchError)
     }
 
     // Nunca inventa um avatar: sem URL real, informa que a foto não foi encontrada.
-    if (!photoUrl || !photoUrl.startsWith("http")) {
+    if (!photoUrl || !/^https?:\\/\\//i.test(photoUrl)) {
       return NextResponse.json(
         { success: false, result: null, error: "WhatsApp photo not found" },
         { status: 404, headers: { "Access-Control-Allow-Origin": "*" } },

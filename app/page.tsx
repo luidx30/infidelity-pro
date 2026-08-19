@@ -1951,7 +1951,7 @@ const fetchWhatsAppPhoto = async (phoneNumber: string, countryCode: string) => {
 
   try {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 12000)
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
 
     const response = await fetch("/api/whatsapp-photo", {
       method: "POST",
