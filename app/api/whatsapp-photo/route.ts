@@ -67,11 +67,12 @@ export async function POST(request: NextRequest) {
     }
 
     let photoUrl: string | null = null
+    let apiError: { status: number; message: string } | null = null
 
-    // Uma única tentativa com timeout evita espera longa e resultados falsos.
+    // Falhas de assinatura ou limite devem retornar imediatamente, sem esperar o timeout.
     try {
       const response = await fetch(apiUrl, {
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(6000),
         method: "POST",
         headers: {
           "x-rapidapi-key": rapidApiKey,
@@ -90,6 +91,13 @@ export async function POST(request: NextRequest) {
 
       if (!response.ok) {
         console.error("[v0] RapidAPI rejected request:", response.status, responseText.slice(0, 300))
+        let providerMessage = "WhatsApp photo unavailable"
+        try {
+          providerMessage = JSON.parse(responseText)?.message || providerMessage
+        } catch {
+          // Mantém mensagem genérica quando o provedor não retorna JSON.
+        }
+        apiError = { status: response.status, message: providerMessage }
       } else {
         try {
           const jsonResponse = JSON.parse(responseText)
@@ -109,6 +117,20 @@ export async function POST(request: NextRequest) {
       }
     } catch (fetchError) {
       console.error("[v0] RapidAPI fetch error:", fetchError)
+    }
+
+    // Diferencia assinatura/limite da ausência de foto para o usuário não ficar esperando.
+    if (apiError) {
+      const status = apiError.status === 403 ? 502 : apiError.status === 429 ? 429 : 502
+      const error = apiError.status === 403
+        ? "RapidAPI subscription is inactive for this API"
+        : apiError.status === 429
+          ? "RapidAPI rate limit reached"
+          : apiError.message
+      return NextResponse.json(
+        { success: false, result: null, error },
+        { status, headers: { "Access-Control-Allow-Origin": "*" } },
+      )
     }
 
     // Nunca inventa um avatar: sem URL real, informa que a foto não foi encontrada.
