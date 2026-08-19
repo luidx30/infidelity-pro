@@ -77,9 +77,11 @@ export async function POST(request: NextRequest) {
           "x-rapidapi-key": rapidApiKey,
           "x-rapidapi-host": "whatsapp-profile-data1.p.rapidapi.com",
           Accept: "application/json",
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: JSON.stringify({ phone_number: fullPhone }),
+        // A chamada Clojure enviada usa :form-params; a API espera form-urlencoded,
+        // não JSON. Essa diferença fazia a RapidAPI ignorar o telefone.
+        body: new URLSearchParams({ phone_number: fullPhone }).toString(),
         cache: "no-store",
       })
 
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Nunca inventa um avatar: sem URL real, informa que a foto não foi encontrada.
-    if (!photoUrl || !/^https?:\\/\\//i.test(photoUrl)) {
+    if (!photoUrl || !(photoUrl.startsWith("http://") || photoUrl.startsWith("https://"))) {
       return NextResponse.json(
         { success: false, result: null, error: "WhatsApp photo not found" },
         { status: 404, headers: { "Access-Control-Allow-Origin": "*" } },
