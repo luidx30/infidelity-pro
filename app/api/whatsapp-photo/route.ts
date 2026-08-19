@@ -28,9 +28,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const cleanNumber = phone.replace(/\D/g, "")
-    const cleanCountryCode = countryCode?.replace(/\D/g, "") || ""
-    const fullPhone = cleanCountryCode + cleanNumber
+    // Aceita tanto o número separado do DDI quanto o formato internacional completo:
+    // +44 7984 004914, 44 7984 004914 ou 7984004914 com countryCode=44.
+    const rawPhone = String(phone).trim()
+    const cleanNumber = rawPhone.replace(/\D/g, "")
+    const cleanCountryCode = String(countryCode || "").replace(/\D/g, "")
+    const fullPhone = rawPhone.startsWith("+")
+      ? cleanNumber
+      : cleanCountryCode && cleanNumber.startsWith(cleanCountryCode) && cleanNumber.length > cleanCountryCode.length + 7
+        ? cleanNumber
+        : cleanCountryCode + cleanNumber
+
+    if (fullPhone.length < 8 || fullPhone.length > 15) {
+      return NextResponse.json(
+        { success: false, result: null, error: "Enter a valid international phone number" },
+        { status: 400, headers: { "Access-Control-Allow-Origin": "*" } },
+      )
+    }
     
     console.log("[v0] ========== WHATSAPP API ROUTE ==========")
     console.log("[v0] Phone received:", phone)

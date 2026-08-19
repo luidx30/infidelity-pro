@@ -2464,8 +2464,8 @@ const fetchUserLocation = async () => {
                   </select>
                   <input
                     type="tel"
-                    placeholder="Phone number"
-                    value={investigatedPhone.split(" ")[1] || ""}
+                    placeholder="Number only, e.g. 7984004914"
+                    value={investigatedPhone.split(" ").slice(1).join(" ") || ""}
                     onChange={(e) => {
                       const countryCode = investigatedPhone.split(" ")[0] || "+1"
                       const fullPhone = `${countryCode} ${e.target.value}`
@@ -2495,7 +2495,7 @@ const fetchUserLocation = async () => {
 
                           // Also fetch WhatsApp photo
                           fetchWhatsAppPhoto(e.target.value, countryCode.replace("+", ""))
-                        }, 1500) // Wait 1.5s after user stops typing
+                        }, 500) // Search shortly after the user stops typing
                         debounceTimer.current = timer
                       }
                     }}
