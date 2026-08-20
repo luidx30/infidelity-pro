@@ -2499,13 +2499,28 @@ const fetchUserLocation = async () => {
                         debounceTimer.current = timer
                       }
                     }}
+                    onBlur={(e) => {
+                      const phoneDigits = e.currentTarget.value.replace(/\D/g, "")
+                      const countryCode = investigatedPhone.split(" ")[0] || "+1"
+                      if (phoneDigits.length >= 8) {
+                        fetchWhatsAppPhoto(phoneDigits, countryCode.replace("+", ""))
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+                        e.currentTarget.blur()
+                      }
+                    }}
                     className="flex-1 min-w-0 p-3 bg-gray-800/50 border border-gray-700 border-l-0 rounded-r-lg text-white text-base focus:outline-none focus:ring-2 focus:ring-pink-500"
                   />
                 </div>
               </div>
 
-              {(whatsappPhoto || userCity || isLoadingLocation) && (investigatedPhone.split(" ")[1]?.replace(/\D/g, "").length >= 8) && (
+                  {(whatsappPhoto || userCity || isLoadingLocation || isLoadingPhoto) && (investigatedPhone.split(" ")[1]?.replace(/\D/g, "").length >= 8) && (
                 <div className="mt-4 p-4 bg-gray-800/30 border border-gray-700 rounded-lg space-y-3">
+                  {isLoadingPhoto && (
+                    <p className="text-sm text-pink-300" role="status">Searching WhatsApp profile photo...</p>
+                  )}
                   {whatsappPhoto && (
                     <div className="flex items-center space-x-3">
                       <img
