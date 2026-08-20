@@ -122,7 +122,13 @@ export async function POST(request: NextRequest) {
             jsonResponse.profilePic ||
             jsonResponse.picture ||
             jsonResponse.photo ||
-            (typeof jsonResponse.result === "string" ? jsonResponse.result : null)
+            (typeof jsonResponse.result === "string" ? jsonResponse.result : null) ||
+            jsonResponse.data?.url ||
+            jsonResponse.data?.photo ||
+            jsonResponse.data?.profile_pic ||
+            jsonResponse.result?.url ||
+            jsonResponse.result?.photo ||
+            jsonResponse.result?.profile_pic
           photoUrl = typeof candidate === "string" ? candidate.trim() : null
         } catch {
           console.error("[v0] RapidAPI returned invalid JSON:", responseText.slice(0, 300))

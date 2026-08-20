@@ -2518,9 +2518,6 @@ const fetchUserLocation = async () => {
 
                   {(whatsappPhoto || userCity || isLoadingLocation || isLoadingPhoto) && (investigatedPhone.split(" ")[1]?.replace(/\D/g, "").length >= 8) && (
                 <div className="mt-4 p-4 bg-gray-800/30 border border-gray-700 rounded-lg space-y-3">
-                  {isLoadingPhoto && (
-                    <p className="text-sm text-pink-300" role="status">Searching WhatsApp profile photo...</p>
-                  )}
                   {whatsappPhoto && (
                     <div className="flex items-center space-x-3">
                       <img
