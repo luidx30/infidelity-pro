@@ -92,11 +92,10 @@ export async function POST(request: NextRequest) {
           "x-rapidapi-key": rapidApiKey,
           "x-rapidapi-host": "whatsapp-profile-data1.p.rapidapi.com",
           Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        // A chamada Clojure enviada usa :form-params; a API espera form-urlencoded,
-        // não JSON. Essa diferença fazia a RapidAPI ignorar o telefone.
-        body: new URLSearchParams({ phone_number: fullPhone }).toString(),
+        // Formato confirmado no plano atualizado da RapidAPI.
+        body: JSON.stringify({ phone_number: fullPhone }),
         cache: "no-store",
       })
 
